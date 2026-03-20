@@ -10,6 +10,7 @@ body{font-family:Arial; background:#f4f4f4; padding:20px;}
 .timer{font-size:18px; font-weight:bold; color:red;}
 .question{margin-bottom:20px;}
 textarea{width:100%; margin-top:5px;}
+button{margin-top:20px; padding:10px;}
 </style>
 </head>
 
@@ -22,14 +23,14 @@ textarea{width:100%; margin-top:5px;}
 <option value="en">English</option>
 </select>
 
-<h2 id="title">Prueba Movimiento Parabólico</h2>
+<h2 id="title"></h2>
 <div class="timer" id="timer">05:00</div>
 
-<input type="text" id="name" placeholder="Nombre completo">
+<input type="text" id="name">
 
 <div id="quiz"></div>
 
-<button onclick="submitTest()" id="submitBtn">Finalizar</button>
+<button onclick="submitTest()" id="submitBtn"></button>
 
 <div id="result"></div>
 
@@ -79,26 +80,31 @@ a:"a"
 ]
 };
 
+// TEXT
 const text = {
 es:{
 title:"Prueba Movimiento Parabólico",
 submit:"Finalizar",
 score:"Puntaje:",
-name:"Nombre completo"
+name:"Nombre completo",
+timeup:"Tiempo finalizado"
 },
 en:{
 title:"Projectile Motion Test",
 submit:"Finish",
 score:"Score:",
-name:"Full name"
+name:"Full name",
+timeup:"Time is over"
 }
 };
 
+// LANGUAGE
 function setLanguage(){
 lang=document.getElementById("lang").value;
 loadQuiz();
 }
 
+// LOAD QUIZ
 function loadQuiz(){
 
 document.getElementById("title").innerText=text[lang].title;
@@ -125,18 +131,24 @@ html+=`<textarea id="j${i}" placeholder="Justificación / Justification"></texta
 document.getElementById("quiz").innerHTML=html;
 }
 
+// SUBMIT
 function submitTest(){
 
 if(submitted) return;
 
+if(time<=0){
+alert(text[lang].timeup);
+}
+
 let name=document.getElementById("name").value;
 if(!name){
-alert("Write your name");
+alert(lang==="es"?"Ingrese su nombre":"Write your name");
 return;
 }
 
 submitted=true;
 
+// CALCULATE
 let correct=0;
 
 data[lang].forEach((q,i)=>{
@@ -144,20 +156,26 @@ let selected=document.querySelector(`input[name="q${i}"]:checked`);
 if(selected && selected.value===q.a) correct++;
 });
 
-let score=(1+(3*correct/3)).toFixed(1);
+let maxScore=4.0;
+let baseScore=(correct/data[lang].length)*maxScore;
+let visibleScore=(baseScore*0.6).toFixed(1);
 
+// SHOW RESULT
 document.getElementById("result").innerHTML=
-`${text[lang].score} ${score} / 4.0`;
+`${text[lang].score} ${visibleScore} / 4.0 (60% provisional)`;
 
-document.querySelectorAll("input,textarea,button").forEach(e=>e.disabled=true);
+// DISABLE INPUTS
+document.querySelectorAll("input,textarea,button,select").forEach(e=>e.disabled=true);
 
-// EMAIL
+// EMAIL BODY
 let body=`Name: ${name}
 
-Score: ${score}/4.0
+Correct answers: ${correct}/${data[lang].length}
 
-Answers + Justifications:
+Raw score (100%): ${baseScore.toFixed(2)}/4.0
+Student visible score (60%): ${visibleScore}/4.0
 
+Justifications:
 `;
 
 data[lang].forEach((q,i)=>{
@@ -169,21 +187,36 @@ ${document.getElementById("j"+i).value}
 `;
 });
 
+// SEND EMAIL
 window.location.href=`mailto:mauri.diaz@uandresbello.edu?subject=Test ${name}&body=${encodeURIComponent(body)}`;
 
 }
 
 // TIMER
-setInterval(()=>{
+let timerInterval=setInterval(()=>{
+
+if(submitted){
+clearInterval(timerInterval);
+return;
+}
+
 let m=Math.floor(time/60);
 let s=time%60;
+
 document.getElementById("timer").innerText=
 `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 
-if(time<=0) submitTest();
+if(time<=0){
+submitTest();
+clearInterval(timerInterval);
+return;
+}
+
 time--;
+
 },1000);
 
+// INIT
 loadQuiz();
 
 </script>
