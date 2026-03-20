@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Projectile Test</title>
+
+<style>
+body{font-family:Arial; background:#f4f4f4; padding:20px;}
+.container{max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px;}
+.timer{font-size:18px; font-weight:bold; color:red;}
+.question{margin-bottom:20px;}
+textarea{width:100%; margin-top:5px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<select id="lang" onchange="setLanguage()">
+<option value="es">Español</option>
+<option value="en">English</option>
+</select>
+
+<h2 id="title">Prueba Movimiento Parabólico</h2>
+<div class="timer" id="timer">05:00</div>
+
+<input type="text" id="name" placeholder="Nombre completo">
+
+<div id="quiz"></div>
+
+<button onclick="submitTest()" id="submitBtn">Finalizar</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+let lang="es";
+let time=300;
+let submitted=false;
+
+// QUESTIONS
+const data = {
+es:[
+{
+q:"Una pelota es lanzada horizontalmente desde un edificio de 100 m y cae a 80 m de la base. ¿Rapidez inicial?",
+opts:["42.4 m/s","17.9 m/s","22.1 m/s","35.4 m/s"],
+a:"b"
+},
+{
+q:"Se lanza un cuerpo con ángulo 45°. Si tarda 2 s en alcanzar altura máxima, ¿rapidez inicial?",
+opts:["28.3 m/s","42.4 m/s","56.6 m/s","70.7 m/s"],
+a:"a"
+},
+{
+q:"Proyectil horizontal con v0=10 m/s alcanza 50 m. ¿Altura?",
+opts:["125 m","150 m","80 m","50 m"],
+a:"a"
+}
+],
+en:[
+{
+q:"A ball is launched horizontally from a 100 m building and lands 80 m away. What was the initial speed?",
+opts:["42.4 m/s","17.9 m/s","22.1 m/s","35.4 m/s"],
+a:"b"
+},
+{
+q:"A projectile is launched at 45°. If it takes 2 s to reach max height, what is the initial speed?",
+opts:["28.3 m/s","42.4 m/s","56.6 m/s","70.7 m/s"],
+a:"a"
+},
+{
+q:"A horizontal projectile with v0=10 m/s travels 50 m. What is the height?",
+opts:["125 m","150 m","80 m","50 m"],
+a:"a"
+}
+]
+};
+
+const text = {
+es:{
+title:"Prueba Movimiento Parabólico",
+submit:"Finalizar",
+score:"Puntaje:",
+name:"Nombre completo"
+},
+en:{
+title:"Projectile Motion Test",
+submit:"Finish",
+score:"Score:",
+name:"Full name"
+}
+};
+
+function setLanguage(){
+lang=document.getElementById("lang").value;
+loadQuiz();
+}
+
+function loadQuiz(){
+
+document.getElementById("title").innerText=text[lang].title;
+document.getElementById("submitBtn").innerText=text[lang].submit;
+document.getElementById("name").placeholder=text[lang].name;
+
+let html="";
+
+data[lang].forEach((q,i)=>{
+
+html+=`<div class="question">
+<p>${i+1}) ${q.q}</p>`;
+
+q.opts.forEach((opt,j)=>{
+let letter=["a","b","c","d"][j];
+html+=`<label><input type="radio" name="q${i}" value="${letter}"> ${letter}) ${opt}</label><br>`;
+});
+
+html+=`<textarea id="j${i}" placeholder="Justificación / Justification"></textarea>
+</div>`;
+
+});
+
+document.getElementById("quiz").innerHTML=html;
+}
+
+function submitTest(){
+
+if(submitted) return;
+
+let name=document.getElementById("name").value;
+if(!name){
+alert("Write your name");
+return;
+}
+
+submitted=true;
+
+let correct=0;
+
+data[lang].forEach((q,i)=>{
+let selected=document.querySelector(`input[name="q${i}"]:checked`);
+if(selected && selected.value===q.a) correct++;
+});
+
+let score=(1+(3*correct/3)).toFixed(1);
+
+document.getElementById("result").innerHTML=
+`${text[lang].score} ${score} / 4.0`;
+
+document.querySelectorAll("input,textarea,button").forEach(e=>e.disabled=true);
+
+// EMAIL
+let body=`Name: ${name}
+
+Score: ${score}/4.0
+
+Answers + Justifications:
+
+`;
+
+data[lang].forEach((q,i)=>{
+let ans=document.querySelector(`input[name="q${i}"]:checked`);
+body+=`Q${i+1}: ${ans?ans.value:"No answer"}
+
+${document.getElementById("j"+i).value}
+
+`;
+});
+
+window.location.href=`mailto:mauri.diaz@uandresbello.edu?subject=Test ${name}&body=${encodeURIComponent(body)}`;
+
+}
+
+// TIMER
+setInterval(()=>{
+let m=Math.floor(time/60);
+let s=time%60;
+document.getElementById("timer").innerText=
+`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+
+if(time<=0) submitTest();
+time--;
+},1000);
+
+loadQuiz();
+
+</script>
+
+</body>
+</html>
